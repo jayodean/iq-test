@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>AI IQ Test</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f0f2f5;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      padding: 20px;
+    }
+    .card {
+      background: white;
+      border-radius: 12px;
+      padding: 2rem;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+      max-width: 500px;
+      width: 100%;
+      text-align: center;
+      overflow: hidden;
+    }
+    .question {
+      font-size: 1.2rem;
+      margin-bottom: 1.5rem;
+    }
+    .options button {
+      display: block;
+      width: 100%;
+      margin: 0.4rem 0;
+      padding: 0.8rem;
+      border: none;
+      border-radius: 8px;
+      background: #2575fc;
+      color: white;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+    .options button:hover {
+      background: #1a5cd8;
+    }
+    .result {
+      font-size: 1.1rem;
+    }
+    .iq-score {
+      font-size: 2rem;
+      font-weight: bold;
+      color: #2575fc;
+      margin-bottom: 1rem;
+    }
+    .fade-slide {
+      opacity: 0;
+      transform: translateX(50px);
+      transition: all 0.4s ease;
+    }
+    .fade-slide.show {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  </style>
+</head>
+<body>
+
+  <div class="card" id="quiz-card">
+    <div id="quiz-content" class="fade-slide"></div>
+  </div>
+
+  <script>
+    const questions = [
+      { question: "What is 2 + 2?", options: ["3", "4", "5"], correct: "4" },
+      { question: "Which shape has 3 sides?", options: ["Triangle", "Square", "Circle"], correct: "Triangle" },
+      { question: "If all Bloops are Razzies and all Razzies are Lazzies, are all Bloops definitely Lazzies?", options: ["Yes", "No", "Cannot say"], correct: "Yes" },
+      { question: "What is the next number in the sequence: 2, 4, 8, 16, ...?", options: ["18", "24", "32"], correct: "32" },
+      { question: "Which is the odd one out? Apple, Banana, Carrot, Grape", options: ["Apple", "Banana", "Carrot", "Grape"], correct: "Carrot" },
+      { question: "If a train travels 60 miles in 1.5 hours, what is its average speed?", options: ["30 mph", "40 mph", "50 mph"], correct: "40 mph" },
+      { question: "Which is heavier: 1 kg of steel or 1 kg of feathers?", options: ["Steel", "Feathers", "Same weight"], correct: "Same weight" },
+      { question: "Find the missing number: 3, 6, 9, 12, ?", options: ["14", "15", "18"], correct: "15" },
+      { question: "Which planet is known as the Red Planet?", options: ["Venus", "Mars", "Jupiter"], correct: "Mars" },
+      { question: "Which number is a prime number?", options: ["4", "7", "9"], correct: "7" },
+      { question: "If 5 cats catch 5 mice in 5 minutes, how many cats are needed to catch 100 mice in 100 minutes?", options: ["5", "10", "20"], correct: "5" },
+      { question: "Which is the largest: 0.5, 0.55, 0.45?", options: ["0.5", "0.55", "0.45"], correct: "0.55" },
+      { question: "What is the square root of 81?", options: ["8", "9", "10"], correct: "9" },
+      { question: "If yesterday was Wednesday, what day is tomorrow?", options: ["Thursday", "Friday", "Saturday"], correct: "Friday" },
+      { question: "Complete the pattern: A, C, E, G, ?", options: ["H", "I", "J"], correct: "I" },
+      { question: "If you rearrange the letters 'CIFAIPC', you get the name of a:", options: ["City", "Ocean", "Country"], correct: "Pacific" },
+      { question: "Which is the odd one out? Dog, Cat, Mouse, Whale", options: ["Dog", "Cat", "Mouse", "Whale"], correct: "Whale" },
+      { question: "If you double 15 and add 10, what do you get?", options: ["35", "40", "50"], correct: "40" },
+      { question: "What comes next in the sequence: 1, 1, 2, 3, 5, ?", options: ["8", "10", "13"], correct: "8" },
+      { question: "Which two months have exactly 30 days?", options: ["April and June", "May and September", "June and July"], correct: "April and June" }
+    ];
+
+    let currentIndex = 0;
+    let score = 0;
+    const answers = [];
+
+    const quizContent = document.getElementById("quiz-content");
+
+    function fadeInContent(contentHtml) {
+      quizContent.classList.remove("show");
+      setTimeout(() => {
+        quizContent.innerHTML = contentHtml;
+        quizContent.classList.add("show");
+      }, 150);
+    }
+
+    function showQuestion() {
+      const q = questions[currentIndex];
+      const html = `
+        <div class="question">${q.question}</div>
+        <div class="options">
+          ${q.options.map(opt => `<button onclick="selectAnswer('${opt}')">${opt}</button>`).join("")}
+        </div>
+      `;
+      fadeInContent(html);
+    }
+
+    async function selectAnswer(selected) {
+      const q = questions[currentIndex];
+      if (selected === q.correct) score++;
+      answers.push({ question: q.question, selected, correct: q.correct });
+
+      currentIndex++;
+      if (currentIndex < questions.length) {
+        setTimeout(showQuestion, 300); // short delay for smooth transition
+      } else {
+        await showResult();
+      }
+    }
+
+    async function showResult() {
+      fadeInContent(`<p>Calculating your IQ score...</p>`);
+
+      try {
+        const res = await fetch("/api/iq-score", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ score, answers })
+        });
+        const data = await res.json();
+
+        fadeInContent(`
+          <div class="result">
+            <div class="iq-score">${data.iq}</div>
+            <p>${data.analysis}</p>
+          </div>
+        `);
+      } catch (err) {
+        fadeInContent(`<p>⚠️ Error calculating IQ. Please try again.</p>`);
+      }
+    }
+
+    // Start test
+    showQuestion();
+  </script>
+
+</body>
+</html>
