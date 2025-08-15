@@ -1,37 +1,20 @@
-// server.js
 import express from "express";
 import path from "path";
 import { fileURLToPath } from "url";
 import OpenAI from "openai";
 
-// ESM __dirname equivalent
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
 
-// Ensure API key is set
-if (!process.env.OPENAI_API_KEY) {
-  console.error("❌ Missing OPENAI_API_KEY environment variable");
-  process.exit(1);
-}
-
 const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY // Set in Render's dashboard
+  apiKey: process.env.OPENAI_API_KEY
 });
 
 app.use(express.json());
 app.use(express.static(path.join(__dirname, "public")));
 
-// API route for IQ score evaluation
 app.post("/api/iq-score", async (req, res) => {
   const { score } = req.body;
-
-  if (typeof score !== "number") {
-    return res.status(400).json({ error: "Invalid score" });
-  }
-
-  // Simple baseline IQ calculation
   const rawIQ = 80 + score * 2;
 
   try {
@@ -40,8 +23,7 @@ app.post("/api/iq-score", async (req, res) => {
       messages: [
         {
           role: "system",
-          content:
-            "You are an IQ test evaluator. Provide a short, friendly analysis based on the score and calculated IQ."
+          content: "You are an IQ test evaluator. Provide a short, friendly analysis."
         },
         {
           role: "user",
@@ -51,16 +33,14 @@ app.post("/api/iq-score", async (req, res) => {
       max_tokens: 100
     });
 
-    const aiMessage =
-      completion.choices[0]?.message?.content?.trim() ||
-      "No analysis available.";
+    const aiMessage = completion.choices[0].message.content.trim();
 
     res.json({
-      iq: rawIQ,
-      analysis: aiMessage
+      estimatedIQ: rawIQ,
+      feedback: aiMessage
     });
   } catch (error) {
-    console.error("❌ AI Scoring Failed:", error.message);
+    console.error(error);
     res.status(500).json({ error: "AI scoring failed." });
   }
 });
