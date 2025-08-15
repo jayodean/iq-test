@@ -1,13 +1,12 @@
-import express from "express";
-import path from "path";
-import { fileURLToPath } from "url";
-import OpenAI from "openai";
+// server.js
+const express = require("express");
+const path = require("path");
+const OpenAI = require("openai");
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
 
 const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY
+  apiKey: process.env.OPENAI_API_KEY // Render environment variable
 });
 
 app.use(express.json());
@@ -15,6 +14,7 @@ app.use(express.static(path.join(__dirname, "public")));
 
 app.post("/api/iq-score", async (req, res) => {
   const { score } = req.body;
+
   const rawIQ = 80 + score * 2;
 
   try {
@@ -23,7 +23,8 @@ app.post("/api/iq-score", async (req, res) => {
       messages: [
         {
           role: "system",
-          content: "You are an IQ test evaluator. Provide a short, friendly analysis."
+          content:
+            "You are an IQ test evaluator. Provide a short, friendly analysis based on the score and calculated IQ."
         },
         {
           role: "user",
@@ -46,4 +47,4 @@ app.post("/api/iq-score", async (req, res) => {
 });
 
 const port = process.env.PORT || 3000;
-app.listen(port, () => console.log(`✅ Server running on port ${port}`));
+app.listen(port, () => console.log(`Server running on port ${port}`));
